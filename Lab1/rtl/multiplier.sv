@@ -6,25 +6,21 @@ module multiplier #(
     input  logic START,
     input  logic RESET,
     output logic READY,
-    output logic signed [WIDTH*2-1:0] DOUT
+    output logic signed [WIDTH-1:0] DOUT
 );
-    localparam int WIDTH_B = (WIDTH % 2 == 0) ? WIDTH : (WIDTH + 1);
-    localparam int CNT = WIDTH_B / 2;
+    localparam int CNT = WIDTH / 2;
 
-    logic signed [WIDTH_B:0] B_EXTENDED;
-    logic signed [2*WIDTH-1:0] A_EXTENDED;
+    logic signed [WIDTH:0] B_EXTENDED;
+    logic signed [2*WIDTH-1:0] TEMP;
 
-    assign A_EXTENDED = (2*WIDTH)'(DIN_A);
-    assign B_EXTENDED = (WIDTH_B + 1)'($signed({DIN_B, 1'b0}));
+    assign B_EXTENDED = {DIN_B, 1'b0};
 
     always_comb begin
-        DOUT  = '0;
+        TEMP = '0;
         READY = 1'b0;
-        
-        if (RESET) begin
-            DOUT  = '0;
-            READY = 1'b0;
-        end else if (START) begin
+        DOUT = '0;
+
+        if (!RESET && START) begin
             READY = 1'b1;
             for (int i = 0; i < CNT; i++) begin
                 logic [2:0] TRIPLET;
@@ -34,16 +30,22 @@ module multiplier #(
 
                 case (TRIPLET)
                     3'b000: CONTROL = '0;
-                    3'b001: CONTROL = A_EXTENDED;
-                    3'b010: CONTROL = A_EXTENDED;
-                    3'b011: CONTROL = A_EXTENDED <<< 1;
-                    3'b100: CONTROL = -(A_EXTENDED <<< 1);
-                    3'b101: CONTROL = -A_EXTENDED;
-                    3'b110: CONTROL = -A_EXTENDED;
+                    3'b001: CONTROL = DIN_A;
+                    3'b010: CONTROL = DIN_A;
+                    3'b011: CONTROL = DIN_A <<< 1;
+                    3'b100: CONTROL = -DIN_A <<< 1;
+                    3'b101: CONTROL = -DIN_A;
+                    3'b110: CONTROL = -DIN_A;
                     3'b111: CONTROL = '0;
+                    default: CONTROL = '0;
                 endcase
+                TEMP = TEMP + (CONTROL <<< (2*i));
+            end
 
-                DOUT = DOUT + (CONTROL <<< (2*i));
+            if (TEMP[31:30] == 2'b01) begin
+                DOUT = 16'h7FFF; 
+            end else begin
+                DOUT = TEMP[30:15];
             end
         end
     end

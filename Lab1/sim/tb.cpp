@@ -12,7 +12,7 @@ int16_t ft2fp(float val, int float_bits) {
     return static_cast<int16_t>(std::round(val * (1 << float_bits)));
 }
 
-float fp2ft(int32_t val, int float_bits) {
+float fp2ft(int16_t val, int float_bits = 15) {
     return static_cast<float>(val) / static_cast<float>(1 << float_bits);
 }
 
@@ -49,8 +49,12 @@ int main(int argc, char** argv) {
     tick(top.get(), trace.get(), sim_time);
 
     struct TestCase { float a; float b; };
-    std::vector<TestCase> tests = {{-14.12f, 3.5f}, { 2.00f, 1.5f}, { -1.00f, 5.25f}, { 10.00f, 0.5f}};
-
+    std::vector<TestCase> tests = {
+            {-0.12f, 0.95f}, 
+            { 0.42f, 0.50f}, 
+            {-0.99f, 0.67f}, 
+            { 0.21f, 0.40f}
+        };
     std::cout << std::fixed << std::setprecision(4);
     std::cout << "Step |     A     |     B     |   A * B   | Accumulator (Actual / Expected)\n";
     std::cout << "-----+-----------+-----------+-----------+---------------------------------\n";
@@ -62,8 +66,8 @@ int main(int argc, char** argv) {
         float b = tests[i].b;
         expected_acc += a * b;
 
-        top->DIN_A = ft2fp(a, 8);
-        top->DIN_B = ft2fp(b, 8);
+        top->DIN_A = ft2fp(a, 15);
+        top->DIN_B = ft2fp(b, 15);
 
         top->START = 1;
         tick(top.get(), trace.get(), sim_time);
@@ -73,7 +77,8 @@ int main(int argc, char** argv) {
             tick(top.get(), trace.get(), sim_time);
         }
 
-        float result = fp2ft(top->DOUT, 16);
+        int16_t dout = static_cast<int16_t>(top->DOUT);
+        float result = fp2ft(dout, 15);
 
         std::cout << "  " << i + 1 << "  | " << std::setw(9) << a << " | "  << std::setw(9) << b << " | "  << std::setw(9) << (a * b) << " | "  << std::setw(9) << result << " / " << expected_acc << "\n";}
 
