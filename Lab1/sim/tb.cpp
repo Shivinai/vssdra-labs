@@ -12,8 +12,8 @@ int16_t ft2fp(float val, int float_bits) {
     return static_cast<int16_t>(std::round(val * (1 << float_bits)));
 }
 
-float fp2ft(int16_t val, int float_bits = 15) {
-    return static_cast<float>(val) / static_cast<float>(1 << float_bits);
+double fp2ft(int64_t val, int float_bits) {
+    return static_cast<double>(val) / static_cast<double>(1LL << float_bits);
 }
 
 void tick(Vmac* top, VerilatedFstC* trace, uint64_t& sim_time) {
@@ -77,8 +77,8 @@ int main(int argc, char** argv) {
             tick(top.get(), trace.get(), sim_time);
         }
 
-        int16_t dout = static_cast<int16_t>(top->DOUT);
-        float result = fp2ft(dout, 15);
+        int32_t dout = static_cast<int32_t>(top->DOUT);
+        float result = fp2ft(dout, 30);
 
         std::cout << "  " << i + 1 << "  | " << std::setw(9) << a << " | "  << std::setw(9) << b << " | "  << std::setw(9) << (a * b) << " | "  << std::setw(9) << result << " / " << expected_acc << "\n";}
 

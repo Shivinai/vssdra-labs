@@ -1,5 +1,6 @@
 module mac #(
-    parameter int WIDTH = 16
+    parameter int WIDTH = 16,
+    parameter int ACCUMULATOR_WIDTH = 32
 ) (
     input  logic CLK,
     input  logic RESET,
@@ -7,18 +8,17 @@ module mac #(
     input  logic signed [WIDTH-1:0] DIN_A,
     input  logic signed [WIDTH-1:0] DIN_B,
     output logic READY,
-    output logic signed [WIDTH*2-1:0] DOUT
+    output logic signed [ACCUMULATOR_WIDTH-1:0] DOUT
 );
-
     logic MULT_START;
     logic MULT_READY;
     logic REG_WRITE;
+ 
+    logic signed [2*WIDTH-1:0] MULT_OUT;
+    logic signed [ACCUMULATOR_WIDTH-1:0] SUM_OUT;
+    logic signed [ACCUMULATOR_WIDTH-1:0] ACC_OUT;
 
-    logic signed [WIDTH-1:0] MULT_OUT;
-    logic signed [2*WIDTH-1:0] SUM_OUT;
-    logic signed [WIDTH*2-1:0] ACC_OUT;
-
-    control u_control (
+control u_control (
         .CLK (CLK),
         .RESET (RESET),
         .START (START),
@@ -28,9 +28,10 @@ module mac #(
         .REG_WRITE (REG_WRITE)
     );
 
-    multiplier #(
+multiplier #(
         .WIDTH(WIDTH)
     ) u_multiplier (
+        .CLK (CLK),
         .RESET (RESET),
         .START (MULT_START),
         .DIN_A (DIN_A),
@@ -39,16 +40,17 @@ module mac #(
         .DOUT (MULT_OUT)
     );
 
-    summator #(
-        .WIDTH(WIDTH)
+summator #(
+        .WIDTH(2*WIDTH),
+        .ACCUMULATOR_WIDTH(ACCUMULATOR_WIDTH)
     ) u_summator (
         .DIN_A (MULT_OUT),
         .DIN_B (ACC_OUT),
         .DOUT (SUM_OUT)
     );
 
-    register #(
-        .WIDTH(WIDTH * 2)
+register #(
+        .WIDTH(ACCUMULATOR_WIDTH)
     ) u_register (
         .CLK (CLK),
         .RESET (RESET),
@@ -56,7 +58,7 @@ module mac #(
         .DIN (SUM_OUT),
         .DOUT (ACC_OUT)
     );
-
-    assign DOUT = ACC_OUT;
+ 
+assign DOUT = ACC_OUT;
 
 endmodule
