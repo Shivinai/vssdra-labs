@@ -1,6 +1,4 @@
-module multiplier_control #(
-    parameter int WIDTH = 16
-) (
+module multiplier_control (
     input  logic CLK,
     input  logic RESET,
     input  logic START,
@@ -9,8 +7,8 @@ module multiplier_control #(
     output logic READY
 );
 
-    localparam int CNT = WIDTH / 2;
-    logic [$clog2(CNT+1)-1:0] COUNTER;
+    localparam int CNT = 8;
+    logic [2:0] COUNTER;
 
     typedef enum logic [1:0] {
         IDLE,

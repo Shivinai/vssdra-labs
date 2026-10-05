@@ -14,7 +14,7 @@ module mac #(
     logic MULT_READY;
     logic REG_WRITE;
  
-    logic signed [2*WIDTH-1:0] MULT_OUT;
+    logic signed [WIDTH-1:0] MULT_OUT;
     logic signed [ACCUMULATOR_WIDTH-1:0] SUM_OUT;
     logic signed [ACCUMULATOR_WIDTH-1:0] ACC_OUT;
 
@@ -41,7 +41,7 @@ multiplier #(
     );
 
 summator #(
-        .WIDTH(2*WIDTH),
+        .WIDTH(WIDTH),
         .ACCUMULATOR_WIDTH(ACCUMULATOR_WIDTH)
     ) u_summator (
         .DIN_A (MULT_OUT),

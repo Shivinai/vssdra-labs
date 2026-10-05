@@ -7,7 +7,7 @@ module multiplier #(
     input  logic signed [WIDTH-1:0] DIN_A,
     input  logic signed [WIDTH-1:0] DIN_B,
     output logic READY,
-    output logic signed [2*WIDTH-1:0] DOUT
+    output logic signed [WIDTH-1:0] DOUT
 );
     logic LOAD;
     logic RUN;
@@ -21,9 +21,7 @@ module multiplier #(
     logic signed [WIDTH+1:0] CONTROL;
     logic signed [WIDTH+1:0] SUM;
 
-    multiplier_control #(
-        .WIDTH(WIDTH)
-    ) u_multiplier_control (
+    multiplier_control u_multiplier_control (
         .CLK (CLK),
         .RESET (RESET),
         .START (START),
@@ -33,6 +31,8 @@ module multiplier #(
     );
 
     assign TRIPLET = {B_REG[1:0], B_PREV};
+
+    logic [31:0] TEMP;
 
     always_comb begin
         case (TRIPLET)
@@ -68,6 +68,7 @@ module multiplier #(
         end
     end
 
-    assign DOUT = {ACCUMULATOR[WIDTH-1:0], B_REG};
+    assign TEMP = {ACCUMULATOR[WIDTH-1:0], B_REG};
+    assign DOUT = (TEMP[31:30] == 2'b01 || TEMP[31:30] == 2'b01) ? 16'h7FFF : TEMP[30:15];
 
 endmodule

@@ -8,6 +8,10 @@
 #include <verilated_fst_c.h>
 #include "Vmac.h"
 
+constexpr int IN_FRAC_BITS  = 15;
+constexpr int ACC_FRAC_BITS = 15;
+constexpr int ACC_WIDTH     = 32;
+
 int16_t ft2fp(float val, int float_bits) {
     return static_cast<int16_t>(std::round(val * (1 << float_bits)));
 }
@@ -50,11 +54,12 @@ int main(int argc, char** argv) {
 
     struct TestCase { float a; float b; };
     std::vector<TestCase> tests = {
-            {-0.12f, 0.95f}, 
-            { 0.42f, 0.50f}, 
-            {-0.99f, 0.67f}, 
-            { 0.21f, 0.40f}
-        };
+        {-0.12f,  0.95f}, 
+        { 0.42f,  0.50f}, 
+        {-0.99f,  0.67f}, 
+        { 0.21f,  0.40f}
+    };
+
     std::cout << std::fixed << std::setprecision(4);
     std::cout << "Step |     A     |     B     |   A * B   | Accumulator (Actual / Expected)\n";
     std::cout << "-----+-----------+-----------+-----------+---------------------------------\n";
@@ -66,8 +71,8 @@ int main(int argc, char** argv) {
         float b = tests[i].b;
         expected_acc += a * b;
 
-        top->DIN_A = ft2fp(a, 15);
-        top->DIN_B = ft2fp(b, 15);
+        top->DIN_A = ft2fp(a, IN_FRAC_BITS);
+        top->DIN_B = ft2fp(b, IN_FRAC_BITS);
 
         top->START = 1;
         tick(top.get(), trace.get(), sim_time);
@@ -77,14 +82,20 @@ int main(int argc, char** argv) {
             tick(top.get(), trace.get(), sim_time);
         }
 
-        int32_t dout = static_cast<int32_t>(top->DOUT);
-        float result = fp2ft(dout, 30);
+        int64_t raw_dout = static_cast<int64_t>(top->DOUT);
 
-        std::cout << "  " << i + 1 << "  | " << std::setw(9) << a << " | "  << std::setw(9) << b << " | "  << std::setw(9) << (a * b) << " | "  << std::setw(9) << result << " / " << expected_acc << "\n";}
+        if (raw_dout & (1LL << (ACC_WIDTH - 1))) {
+            raw_dout |= ~((1LL << ACC_WIDTH) - 1);
+        }
+
+        double result = fp2ft(raw_dout, ACC_FRAC_BITS);
+
+        std::cout << "  " << i + 1 << "  | " << std::setw(9) << a << " | "  << std::setw(9) << b << " | "  << std::setw(9) << (a * b) << " | "  << std::setw(9) << result << " / " << std::setw(9) << expected_acc << "\n";
+    }
 
     trace->dump(sim_time);
     trace->close();
     top->final();
 
     return 0;
-}
+} 
