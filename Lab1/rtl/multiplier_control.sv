@@ -1,4 +1,6 @@
-module multiplier_control (
+module multiplier_control #(
+    parameter int WIDTH = 16
+) (
     input  logic CLK,
     input  logic RESET,
     input  logic START,
@@ -7,17 +9,19 @@ module multiplier_control (
     output logic READY
 );
 
-    localparam int CNT = 8;
-    logic [2:0] COUNTER;
-
+    localparam int CNT = WIDTH / 2;
+    localparam int CNT_W = (CNT > 1) ? $clog2(CNT) : 1;
+ 
+    logic [CNT_W-1:0] COUNTER;
+ 
     typedef enum logic [1:0] {
         IDLE,
         WORK,
         DONE
     } state_t;
-
+ 
     state_t STATE;
-
+ 
     always_ff @(posedge CLK) begin
         if (RESET) begin
             STATE   <= IDLE;
@@ -30,27 +34,27 @@ module multiplier_control (
                         STATE <= WORK;
                     end
                 end
-                
+ 
                 WORK: begin
                     COUNTER <= COUNTER + 1'b1;
-                    if (COUNTER == CNT - 1) begin
+                    if (COUNTER == CNT_W'(CNT - 1)) begin
                         STATE <= DONE;
                     end
                 end
-
+ 
                 DONE: begin
                     STATE <= IDLE;
                 end
-
+ 
                 default: begin
                     STATE <= IDLE;
                 end
             endcase
         end
     end
-
+ 
     assign LOAD = (STATE == IDLE) && START;
     assign RUN = (STATE == WORK);
     assign READY = (STATE == DONE);
-
+ 
 endmodule

@@ -7,21 +7,23 @@ module multiplier #(
     input  logic signed [WIDTH-1:0] DIN_A,
     input  logic signed [WIDTH-1:0] DIN_B,
     output logic READY,
-    output logic signed [WIDTH-1:0] DOUT
+    output logic signed [2*WIDTH-1:0] DOUT
 );
     logic LOAD;
     logic RUN;
-
+ 
     logic signed [WIDTH-1:0] A_REG;
     logic [WIDTH-1:0] B_REG;
-    logic  B_PREV;
+    logic B_PREV;
     logic signed [WIDTH+1:0] ACCUMULATOR;
-
+ 
     logic [2:0] TRIPLET;
     logic signed [WIDTH+1:0] CONTROL;
     logic signed [WIDTH+1:0] SUM;
-
-    multiplier_control u_multiplier_control (
+ 
+    multiplier_control #(
+        .WIDTH(WIDTH)
+    ) u_multiplier_control (
         .CLK (CLK),
         .RESET (RESET),
         .START (START),
@@ -29,11 +31,9 @@ module multiplier #(
         .RUN (RUN),
         .READY (READY)
     );
-
+ 
     assign TRIPLET = {B_REG[1:0], B_PREV};
-
-    logic [31:0] TEMP;
-
+ 
     always_comb begin
         case (TRIPLET)
             3'b000: CONTROL = '0;
@@ -46,10 +46,10 @@ module multiplier #(
             3'b111: CONTROL = '0;
             default: CONTROL = '0;
         endcase
-
+ 
         SUM = ACCUMULATOR + CONTROL;
     end
-
+ 
     always_ff @(posedge CLK) begin
         if (RESET) begin
             A_REG <= '0;
@@ -67,8 +67,7 @@ module multiplier #(
             B_PREV <= B_REG[1];
         end
     end
-
-    assign TEMP = {ACCUMULATOR[WIDTH-1:0], B_REG};
-    assign DOUT = (TEMP[31:30] == 2'b01 || TEMP[31:30] == 2'b01) ? 16'h7FFF : TEMP[30:15];
-
+ 
+    assign DOUT = {ACCUMULATOR[WIDTH-1:0], B_REG};
+ 
 endmodule

@@ -2,3 +2,6 @@
 obj_dir/
 *.fst
 .clangd
+cocotb_test/
+sim_build/
+__pycache__/

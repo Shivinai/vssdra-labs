@@ -6,6 +6,7 @@ SV_SRCS = $(wildcard $(RTL_DIR)/*.sv)
 CPP_SRCS = $(wildcard $(SIM_DIR)/*.cpp)
 
 WAVE_FILE = wave.fst
+STATE_FILE = wave.ron
 
 VFLAGS = -Wall -Wno-fatal --trace-fst --top-module $(MODULE) --cc $(SV_SRCS) --exe $(CPP_SRCS) \
          -I$(RTL_DIR) -I../common --build -j 0 -o sim_$(MODULE)
@@ -20,7 +21,7 @@ wave: sim
 	@if pgrep -x "surfer" > /dev/null; then \
 		echo "Surfer already running"; \
 	else \
-		surfer $(WAVE_FILE) & \
+		surfer $(WAVE_FILE) -s $(STATE_FILE) & \
 	fi
 
 clean:
