@@ -1,7 +1,10 @@
 .vscode/
 obj_dir/
 *.fst
+*.ron
 .clangd
 cocotb_test/
 sim_build/
 __pycache__/
+wave/
+results.xml

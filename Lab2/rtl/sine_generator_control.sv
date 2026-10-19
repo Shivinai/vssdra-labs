@@ -6,6 +6,7 @@ module sine_generator_control #(
     input logic MAC_READY,
     input logic M_AXIS_TREADY,
 
+    output logic LOAD_INIT,
     output logic MAC_START,
     output logic MAC_CLEAR,
     output logic ADDR,
@@ -15,6 +16,7 @@ module sine_generator_control #(
 );
 
     typedef enum logic [1:0] {
+        INIT,
         START,
         WAIT,
         WRITE
@@ -27,13 +29,14 @@ module sine_generator_control #(
 
     assign OUT_FREE = !M_AXIS_TVALID || M_AXIS_TREADY;
 
+    assign LOAD_INIT = (STATE == INIT);
     assign MAC_START = (STATE == START);
     assign MAC_CLEAR = (STATE == START) && !ADDR;
     assign REG_WRITE = (STATE == WRITE) && OUT_FREE;
 
     always_ff @(posedge CLK) begin
         if (RESET) begin
-            STATE <= START;
+            STATE <= INIT;
             ADDR <= 1'b0;
         end else begin
             STATE <= NEXT_STATE;
@@ -47,6 +50,8 @@ module sine_generator_control #(
         NEXT_STATE = STATE;
 
         case (STATE)
+            INIT: NEXT_STATE = START;
+
             START: NEXT_STATE = WAIT;
 
             WAIT: begin

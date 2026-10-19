@@ -16,7 +16,8 @@ module mac #(
     logic MULT_START;
     logic MULT_READY;
     logic REG_WRITE;
- 
+    logic ACC_RESET;
+
     logic signed [2*WIDTH-1:0] MULT_OUT;
     logic signed [ACCUMULATOR_WIDTH-1:0] SUM_OUT;
     logic signed [ACCUMULATOR_WIDTH-1:0] ACC_OUT;
@@ -56,12 +57,13 @@ module mac #(
         .WIDTH(ACCUMULATOR_WIDTH)
     ) u_register (
         .CLK (CLK),
-        .RESET (RESET),
-        .CLEAR (CLEAR),
+        .RESET (ACC_RESET),
         .ENABLE (REG_WRITE),
         .DIN (SUM_OUT),
         .DOUT (ACC_OUT)
     );
+ 
+    assign ACC_RESET = RESET || CLEAR;
  
     assign ACC = ACC_OUT;
  

@@ -15,6 +15,7 @@ module sine_generator #(
 
     localparam int MINUS_ONE = -(1 << FRAC);
 
+    logic LOAD_INIT;
     logic MAC_START;
     logic MAC_CLEAR;
     logic MAC_READY;
@@ -26,6 +27,7 @@ module sine_generator #(
     logic signed [WIDTH-1:0] MAC_DOUT;
     logic signed [WIDTH-1:0] Y_N1;
     logic signed [WIDTH-1:0] Y_N2;
+    logic signed [WIDTH-1:0] Y_N1_DIN;
 
     always_comb begin
         COEFF = WIDTH'(B1_COEF);
@@ -56,6 +58,7 @@ module sine_generator #(
         .RESET (RESET),
         .MAC_READY (MAC_READY),
         .M_AXIS_TREADY (M_AXIS_TREADY),
+        .LOAD_INIT (LOAD_INIT),
         .MAC_START (MAC_START),
         .MAC_CLEAR (MAC_CLEAR),
         .ADDR (ADDR),
@@ -79,15 +82,15 @@ module sine_generator #(
         .ACC()
     );
 
+    assign Y_N1_DIN = LOAD_INIT ? WIDTH'(Y1_INIT) : MAC_DOUT;
+
     register #(
-        .WIDTH(WIDTH),
-        .RESET_VALUE(WIDTH'(Y1_INIT))
+        .WIDTH(WIDTH)
     ) u_register_y1 (
         .CLK (CLK),
         .RESET (RESET),
-        .CLEAR (1'b0),
-        .ENABLE (REG_WRITE),
-        .DIN (MAC_DOUT),
+        .ENABLE (REG_WRITE || LOAD_INIT),
+        .DIN (Y_N1_DIN),
         .DOUT (Y_N1)
     );
 
@@ -96,7 +99,6 @@ module sine_generator #(
     ) u_register_y2 (
         .CLK (CLK),
         .RESET (RESET),
-        .CLEAR (1'b0),
         .ENABLE (REG_WRITE),
         .DIN (Y_N1),
         .DOUT (Y_N2)
@@ -107,7 +109,6 @@ module sine_generator #(
     ) u_register_out (
         .CLK (CLK),
         .RESET (RESET),
-        .CLEAR (1'b0),
         .ENABLE (REG_WRITE),
         .DIN (MAC_DOUT),
         .DOUT (M_AXIS_TDATA)

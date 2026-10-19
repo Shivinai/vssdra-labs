@@ -1,10 +1,9 @@
-import random
+import os
 
 WIDTH = int(os.environ["WIDTH"])
 FRAC = int(os.environ["FRAC"])
 B1_COEF = int(os.environ["B1_COEF"])
 Y1_INIT = int(os.environ["Y1_INIT"])
-PACKET_LEN = int(os.environ["PACKET_LEN"])
 
 def model(n):
     y1, y2 = Y1_INIT, 0
